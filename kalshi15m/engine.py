@@ -90,6 +90,20 @@ class Engine:
 
     # ------------------------------------------------------------------ tick
     def tick(self, now: float):
+        # The dashboard can wipe/reset the DB; when that happens, drop the
+        # in-memory window state so everything reloads from scratch.
+        epoch = self.db.get_meta("reset_epoch")
+        if not hasattr(self, "_reset_epoch"):
+            self._reset_epoch = epoch
+        elif epoch != self._reset_epoch:
+            self._reset_epoch = epoch
+            self.active = None
+            self.pending = []
+            self.features = None
+            self.last_decision = 0
+            self.last_market = 0
+            self.log("stats reset detected - reloading window state from scratch")
+
         self.ensure_window(now)
 
         if now - self.last_spot >= self.cfg["poll_spot_s"]:

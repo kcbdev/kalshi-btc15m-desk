@@ -230,6 +230,46 @@ def dashboard_html(state) -> str:
 
 
 # --------------------------------------------------------------------------- server
+def reset_stats(db_path, bankroll, archive=True):
+    """Archive the current run, then clear every stat and start a fresh bankroll."""
+    archived = None
+    if archive:
+        archive_dir = os.path.join(os.path.dirname(db_path), "archive")
+        os.makedirs(archive_dir, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        dst_path = os.path.join(archive_dir, f"kalshi15m-{stamp}.db")
+        src = sqlite3.connect(db_path, timeout=20)
+        dst = sqlite3.connect(dst_path)
+        try:
+            with dst:
+                src.backup(dst)
+            archived = os.path.basename(dst_path)
+        finally:
+            dst.close()
+            src.close()
+
+    con = sqlite3.connect(db_path, timeout=20)
+    try:
+        cleared = {}
+        for table in ("trades", "debates", "council", "snapshots", "windows", "ledger", "meta"):
+            cleared[table] = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            con.execute(f"DELETE FROM {table}")
+        now = time.time()
+        con.execute(
+            "INSERT INTO ledger(ts,kind,amount,balance,ref) VALUES(?,?,?,?,?)",
+            (now, "init", bankroll, bankroll, "reset"),
+        )
+        con.execute(
+            "INSERT INTO meta(k,v) VALUES('reset_epoch',?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+            (str(now),),
+        )
+        con.commit()
+    finally:
+        con.close()
+    return {"ok": True, "bankroll": bankroll, "archived": archived,
+            "cleared": cleared, "reset_at": iso(now)}
+
+
 class Handler(BaseHTTPRequestHandler):
     cfg = {}
     db_path = DB_PATH
@@ -264,6 +304,15 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
+    def do_POST(self):
+        try:
+            self._route()
+        except Exception as exc:  # noqa: BLE001
+            try:
+                self._json({"error": str(exc)}, 500)
+            except Exception:
+                pass
+
     def _route(self):
         u = urlparse(self.path)
         path, qs = u.path, parse_qs(u.query)
@@ -276,6 +325,14 @@ class Handler(BaseHTTPRequestHandler):
             from .db import DB
             db = DB(self.db_path)
             return self._send(200, _board_html(live_state(db, self.cfg)), "text/html")
+        if path == "/admin/reset":
+            if self.command != "POST":
+                return self._json({"error": "POST required"}, 405)
+            token = os.environ.get("K15_ADMIN_TOKEN", "")
+            if not token or self.headers.get("X-Admin-Token", "") != token:
+                return self._json({"error": "unauthorized"}, 401)
+            out = reset_stats(self.db_path, float(self.cfg.get("bankroll_start", 1000.0)))
+            return self._json(out)
         if path == "/api/live":
             return self._json(snapshot(self.db_path))
         if path == "/api/summary":
