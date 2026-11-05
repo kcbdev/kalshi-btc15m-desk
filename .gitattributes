@@ -1,0 +1,8 @@
+* text=auto
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+seed/*.db binary

@@ -1,0 +1,44 @@
+services:
+  desk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${DESK_PORT:-8000}:8000"
+    environment:
+      # --- required nothing: Kalshi market data is public, no API keys needed ---
+      PORT: "8000"
+      PYTHONUNBUFFERED: "1"
+      TZ: "UTC"
+      # --- strategy knobs (all optional; defaults come from kalshi15m/config.json) ---
+      K15_BANKROLL: "${K15_BANKROLL:-1000}"
+      K15_RISK_PCT: "${K15_RISK_PCT:-0.005}"
+      K15_MAX_STAKE: "${K15_MAX_STAKE:-10}"
+      K15_MIN_EDGE: "${K15_MIN_EDGE:-0.04}"
+      K15_MAX_EDGE: "${K15_MAX_EDGE:-0.18}"
+      K15_MIN_PRICE: "${K15_MIN_PRICE:-0.15}"
+      K15_MAX_PRICE: "${K15_MAX_PRICE:-0.85}"
+      K15_MIN_TIME_LEFT: "${K15_MIN_TIME_LEFT:-120}"
+      K15_EXIT_MODE: "${K15_EXIT_MODE:-hold}"
+      K15_DAILY_LOSS_LIMIT: "${K15_DAILY_LOSS_LIMIT:-0.12}"
+    volumes:
+      - desk_data:/app/data
+      - desk_journal:/app/journal
+      - desk_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-m", "kalshi15m.healthcheck"]
+      interval: 60s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+volumes:
+  desk_data:
+  desk_journal:
+  desk_logs:

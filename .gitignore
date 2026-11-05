@@ -1,0 +1,21 @@
+# runtime data (kept in the container volume, not in git)
+data/
+logs/
+journal/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# local config / secrets
+.env
+.env.local
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
