@@ -1,19 +1,19 @@
-﻿# Deploy the BTC15M paper desk on Coolify
+# Deploy the BTC15M paper desk on Coolify
 
 One container runs everything: the trading engine + a live-stats web server.
 Kalshi market data is public, so **no API keys or secrets are required**.
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  engine thread â”€â”€â–º  scrapes the market every ~12s, trades    â”‚
-â”‚       â”‚             paper money, writes SQLite           â”‚
-â”‚       â–¼                                                  â”‚
-â”‚  /app/data/kalshi15m.db   (+ /app/journal, /app/logs)    â”‚
-â”‚       â–²                                                  â”‚
-â”‚  HTTP server :8000  /  /api/*  /healthz  /metrics        â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-              persistent volumes            Coolify proxy â”€â”€â–º https://desk.example.com
-```
++----------------------- container -----------------------+
+|  engine thread -->  scrapes Kalshi every ~12s, trades   |
+|       |             paper money, writes SQLite          |
+|       v                                                 |
+|  /app/data/kalshi15m.db   (+ /app/journal, /app/logs)   |
+|       ^                                                 |
+|  HTTP server :8000  /  /api/*  /healthz  /metrics       |
++---------------------------------------------------------+
+              persistent volume            Coolify proxy --> https://kalshi.kcb.ma
+`
 
 ## 0. Live deployment (already provisioned)
 
