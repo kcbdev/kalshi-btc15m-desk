@@ -20,20 +20,20 @@ Kalshi market data is public, so **no API keys or secrets are required**.
 | | |
 |---|---|
 | URL | **https://kalshi.kcb.ma** |
-| Dashboard | https://kalshi.kcb.ma/ Â· JSON: `/api/live`, `/api/summary`, `/metrics` |
+| Dashboard | https://kalshi.kcb.ma/ - JSON: `/api/live`, `/api/summary`, `/metrics` |
 | Health | https://kalshi.kcb.ma/healthz (200 = spot feed fresh) |
 | Coolify project | `Kalshi` (`l9ba5r8vq5jxf5de2alo8mik`) |
 | Application | `kalshi-btc15m-desk` (`ltgyr8ajr6uwahv6iso2lr5r`) |
 | Server | `kcb.ma server` (`e4cowswcks844wow04c084wg`) |
 | Repo | https://github.com/kcbdev/kalshi-btc15m-desk (public, branch `main`) |
 | Build pack | Dockerfile (`/Dockerfile`), port `8000` |
-| Persistent storage | named volume â†’ `/app/data` (SQLite lives here) |
+| Persistent storage | named volume -> `/app/data` (SQLite lives here) |
 | Env | `K15_*` runtime vars (see `.env.example`), editable in Coolify UI |
 
 Redeploy / inspect from a workstation with the Coolify API token set:
 
 ```bash
-export COOLIFY_ACCESS_TOKEN=...          # Coolify â†’ Keys & Tokens â†’ API token
+export COOLIFY_ACCESS_TOKEN=...          # Coolify -> Keys & Tokens -> API token
 python scripts/coolify_deploy.py status  # resource + deploy state
 python scripts/coolify_deploy.py deploy  # force a rebuild + restart
 python scripts/coolify_deploy.py wait    # follow the deployment to finished
@@ -62,8 +62,8 @@ code and deployment files go up. The Docker image only copies `kalshi15m/` +
 
 ## 2. Create the Coolify resource
 
-1. **New Resource â†’ Docker Compose** (recommended) and pick the repo.
-2. Base directory: `/` Â· Compose file: `docker-compose.yml`.
+1. **New Resource -> Docker Compose** (recommended) and pick the repo.
+2. Base directory: `/` - Compose file: `docker-compose.yml`.
 3. Coolify reads the service `desk` and its published port `8000`.
 4. **Domains**: set `https://desk.<your-domain>` and point it at the `desk`
    service, port **8000**.
@@ -84,7 +84,7 @@ If you prefer a single container instead of compose:
 | Build pack | Dockerfile |
 | Dockerfile | `/Dockerfile` |
 | Port | `8000` |
-| Persistent storage | volume â†’ `/app/data` |
+| Persistent storage | volume -> `/app/data` |
 | Healthcheck | `python -m kalshi15m.healthcheck` |
 
 Mounting only `/app/data` is enough to survive redeploys (that is where the
@@ -106,7 +106,7 @@ SQLite database lives). `/app/journal` and `/app/logs` are regenerated if lost.
 
 ## 4. Logs and monitoring
 
-- **Runtime logs**: Coolify â†’ project â†’ the `desk` service â†’ **Logs**. Everything
+- **Runtime logs**: Coolify -> project -> the `desk` service -> **Logs**. Everything
   is printed to stdout (`engine`, `watchdog`, `http server listening`, trade
   lines, `ENTER`, `SETTLED`, `EXIT`). They are unbuffered.
 - **Health**: Coolify's health check hits `/healthz` every 60s. If the spot feed
@@ -118,11 +118,11 @@ SQLite database lives). `/app/journal` and `/app/logs` are regenerated if lost.
 
 ## 5. Persistence and updates
 
-- `desk_data` volume â†’ `/app/data` holds `kalshi15m.db` (all windows, snapshots,
+- `desk_data` volume -> `/app/data` holds `kalshi15m.db` (all windows, snapshots,
   trades, ledger, debates). This is the only thing that must survive.
 - Back it up with `docker run --rm -v desk_data:/data -v $PWD:/backup alpine tar czf /backup/desk-$(date +%F).tar.gz -C /data .`
   or Coolify's volume backup feature.
-- **Deploying a new version**: push to the repo â†’ Coolify â†’ Redeploy. The volume
+- **Deploying a new version**: push to the repo -> Coolify -> Redeploy. The volume
   is retained, the engine resumes from the database and re-settles any window
   that closed while it was down.
 
