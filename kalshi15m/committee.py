@@ -73,6 +73,10 @@ def run_committee(f: dict, ctx: dict, cfg: dict) -> dict:
     knife_yes = quote_move < -0.06
     knife_no = quote_move > 0.06
 
+    min_edge = cfg["min_edge"]
+    min_conf = float(cfg.get("min_confidence") or 0.0)
+    min_entry_price = float(cfg.get("entry_min_price") or 0.15)
+    max_entry_price = float(cfg.get("entry_max_price") or 0.85)
     if vetoes:
         reason = "risk veto: " + "; ".join(vetoes)
     elif edge_yes > max_edge and edge_yes >= edge_no:
@@ -88,6 +92,10 @@ def run_committee(f: dict, ctx: dict, cfg: dict) -> dict:
     elif edge_yes >= cfg["min_edge"] and edge_yes >= edge_no:
         if knife_yes:
             reason = f"YES edge {edge_yes:+.3f} but the quote is collapsing ({quote_move:+.2f} in 60s) - big red candle"
+        elif ask_yes < min_entry_price or ask_yes > max_entry_price:
+            reason = f"YES edge {edge_yes:+.3f} but ask price {ask_yes:.2f} outside [{min_entry_price:.2f},{max_entry_price:.2f}]"
+        elif chair["confidence"] < min_conf:
+            reason = f"YES edge {edge_yes:+.3f} but chair confidence {chair['confidence']:.2f} < threshold"
         else:
             action, side, price, edge = "ENTER", "YES", ask_yes, edge_yes
             reason = (
@@ -97,6 +105,10 @@ def run_committee(f: dict, ctx: dict, cfg: dict) -> dict:
     elif edge_no >= cfg["min_edge"]:
         if knife_no:
             reason = f"NO edge {edge_no:+.3f} but the quote is running away ({quote_move:+.2f} in 60s) - chasing a spike"
+        elif ask_no < min_entry_price or ask_no > max_entry_price:
+            reason = f"NO edge {edge_no:+.3f} but ask price {ask_no:.2f} outside [{min_entry_price:.2f},{max_entry_price:.2f}]"
+        elif chair["confidence"] < min_conf:
+            reason = f"NO edge {edge_no:+.3f} but chair confidence {chair['confidence']:.2f} < threshold"
         else:
             action, side, price, edge = "ENTER", "NO", ask_no, edge_no
             reason = (

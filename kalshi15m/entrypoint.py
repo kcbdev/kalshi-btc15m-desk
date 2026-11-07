@@ -29,6 +29,7 @@ _ENV_MAP = {
     "K15_MAX_EDGE": ("max_edge", float),
     "K15_MIN_PRICE": ("entry_min_price", float),
     "K15_MAX_PRICE": ("entry_max_price", float),
+    "K15_MIN_CONFIDENCE": ("min_confidence", float),
     "K15_MIN_TIME_LEFT": ("min_time_left_s", int),
     "K15_DECISION_START": ("decision_start_s", int),
     "K15_DECISION_EVERY": ("decision_every_s", int),
